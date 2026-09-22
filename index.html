@@ -55,6 +55,11 @@ let exp = JSON.parse(localStorage.getItem('exp_v2')||'[]');
 let budget = Number(localStorage.getItem('budget_v2')||0);
 let goalName = localStorage.getItem('goalName_v2')||'';
 let goalAmt = Number(localStorage.getItem('goalAmt_v2')||0);
+// PASTE THE AUTO CLEAR CODE HERE - At the very top
+
+// Your old code starts here...
+let expenses = JSON.parse(localStorage.getItem('expenses') || '[]');
+...
 
 let total = exp.reduce((s,e)=>s+e.amt,0);
 document.getElementById('budget').innerText=budget;
