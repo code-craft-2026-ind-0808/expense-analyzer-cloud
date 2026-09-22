@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Analytics - Save Money</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<style>
+body{font-family:Arial;background:#eef2ff;padding:15px}
+.card{background:white;padding:20px;border-radius:16px;margin-bottom:14px;box-shadow:0 2px 10px #ddd}
+.nav{display:flex;gap:10px;margin-bottom:15px}
+.nav a{flex:1;text-align:center;padding:10px;background:white;border-radius:10px;text-decoration:none;color:#4a6cf7;font-weight:bold}
+.tip{background:#dcfce7;color:#166534;padding:12px;border-radius:10px;margin:8px 0}
+</style>
+</head>
+<body>
+<div style="max-width:500px;margin:auto">
+<div class="nav">
+<a href="index.html">🏠 Home</a>
+<a href="add.html">➕ Add</a>
+<a href="analytics.html">📊 Analytics</a>
+</div>
+
+<div class="card"><h3>📊 Where Your Money Goes</h3><canvas id="pieChart"></canvas></div>
+<div class="card"><h3>📈 Monthly Spending Trend</h3><canvas id="barChart"></canvas></div>
+<div class="card">
+<h3>💡 Smart Saving Analysis</h3>
+<div id="analysis"></div>
+</div>
+</div>
+
+<script>
+let exp = JSON.parse(localStorage.getItem('exp_v2')||'[]');
+let budget = Number(localStorage.getItem('budget_v2')||0);
+
+// Pie Chart
+let cats = {}; exp.forEach(e=>cats[e.cat]=(cats[e.cat]||0)+e.amt);
+new Chart(document.getElementById('pieChart'),{
+ type:'pie',
+ data:{labels:Object.keys(cats), datasets:[{data:Object.values(cats), backgroundColor:['#4a6cf7','#10b981','#f59e0b','#ef4444','#8b5cf6','#06b6d4']}]}
+});
+
+// Bar Chart
+new Chart(document.getElementById('barChart'),{
+ type:'bar',
+ data:{labels:Object.keys(cats), datasets:[{label:'₹ Spent', data:Object.values(cats), backgroundColor:'#4a6cf7'}]}
+});
+
+// Saving Analysis
+let total = exp.reduce((s,e)=>s+e.amt,0);
+let highest = Object.keys(cats).reduce((a,b)=>cats[a]>cats[b]?a:b,'');
+let html = `<p><b>Total Spent:</b> ₹${total}</p>`;
+html += `<p><b>Budget:</b> ₹${budget} | <b>Remaining:</b> ₹${budget-total}</p>`;
+if(highest){
+ html+=`<div class="tip">🔍 You spend most on <b>${highest} - ₹${cats[highest]}</b></div>`;
+ html+=`<div class="tip">💰 If you reduce ${highest} by 20%, you can save ₹${Math.round(cats[highest]*0.2)} per month = ₹${Math.round(cats[highest]*0.2*12)} per year!</div>`;
+}
+let goalAmt = Number(localStorage.getItem('goalAmt_v2')||0);
+if(goalAmt){
+ let saved = budget-total>0?budget-total:0;
+ html+=`<div class="tip">🎯 To reach your goal of ₹${goalAmt}, save ₹${goalAmt-saved} more. Tip: Cut ${highest} spending!</div>`;
+}
+if(total>budget && budget>0) html+=`<div class="tip" style="background:#fee2e2;color:#991b1b">🚨 You are over budget by ₹${total-budget}! Avoid ${highest} for next 10 days to save.</div>`;
+document.getElementById('analysis').innerHTML=html;
+</script>
+</body>
+</html>
