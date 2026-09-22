@@ -1,79 +1,129 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Smart Saver - Home</title>
+<title>Smart Saver Cloud</title>
 <link rel="manifest" href="manifest.json">
-<meta name="theme-color" content="#4a6cf7">
 <style>
-body{font-family:Arial;background:linear-gradient(135deg,#667eea,#764ba2);padding:15px;margin:0}
-.card{background:white;padding:20px;border-radius:16px;margin-bottom:14px;box-shadow:0 5px 15px rgba(0,0,0,0.2)}
-button{width:100%;padding:14px;border:none;border-radius:10px;font-size:16px;margin:6px 0;font-weight:bold;cursor:pointer}
-.btn-blue{background:#4a6cf7;color:white}
-.btn-green{background:#10b981;color:white}
-.btn-orange{background:#f59e0b;color:white}
-.nav{display:flex;gap:10px}
-.nav a{flex:1;text-align:center;padding:12px;background:white;border-radius:10px;text-decoration:none;color:#4a6cf7;font-weight:bold}
-.progress{width:100%;height:18px;background:#eee;border-radius:10px;overflow:hidden}
-.fill{height:100%;background:#10b981;transition:0.5s}
+  body { background: #1e40af; color: #333; font-family: sans-serif; margin:0; padding:20px; display:flex; flex-direction:column; align-items:center; }
+  .card { background: white; width: 90%; max-width: 400px; border-radius: 15px; padding: 20px; margin-bottom: 20px; box-shadow: 0 4px 10px rgba(0,0,0,0.2); }
+  .tabs { display:flex; gap:10px; margin-bottom:-10px; z-index:1; }
+  .tab { background:#e0e7ff; padding:8px 20px; border-radius:10px 10px 0 0; text-decoration:none; color:#333; font-weight:bold; }
+  .tab.active { background:white; }
+  #progressBar { width:100%; height:15px; background:#eee; border-radius:10px; overflow:hidden; margin:10px 0; }
+  #progress { height:100%; background:#22c55e; width:0%; transition:0.5s; }
+  .btn { width:100%; padding:12px; border:none; border-radius:10px; color:white; font-weight:bold; margin-top:10px; cursor:pointer; }
+  .btn-blue { background:#3b82f6; } .btn-green { background:#16a34a; } .btn-red { background:#ef4444; margin-top:20px; }
+  #goalCompleteBox { display:none; background:#fef3c7; border:2px solid #f59e0b; padding:15px; border-radius:10px; text-align:center; }
 </style>
 </head>
 <body>
-<div style="max-width:500px;margin:auto">
-<h1 style="color:white;text-align:center">💰 Smart Saver Cloud</h1>
-<div class="nav">
-<a href="index.html">🏠 Home</a>
-<a href="add.html">➕ Add</a>
-<a href="analytics.html">📊 Analytics</a>
+
+<h2 style="color:white;">💰 Smart Saver Cloud</h2>
+
+<div class="tabs">
+  <a href="index.html" class="tab active">🏠 Home</a>
+  <a href="add.html" class="tab">➕ Add</a>
+  <a href="analytics.html" class="tab">📊 Analytics</a>
 </div>
 
 <div class="card">
-<h2>Hi, Saver! 👋</h2>
-<p>Budget: ₹<span id="budget">0</span> | Spent: ₹<span id="spent">0</span></p>
-<div class="progress"><div id="bar" class="fill" style="width:0%"></div></div>
-<p>💵 <b>Saved: ₹<span id="saved">0</span></b></p>
-<p id="tip" style="background:#dcfce7;padding:10px;border-radius:8px;margin-top:10px"></p>
+  <h3>Hi, Saver! 👋</h3>
+  <p id="budgetText">Budget: ₹0 | Spent: ₹0</p>
+  <div id="progressBar"><div id="progress"></div></div>
+  <p id="savedText">💵 Saved: ₹0</p>
+  <p id="msg" style="background:#dcfce7; padding:8px; border-radius:5px;"></p>
+
+  <!-- GOAL COMPLETE BOX - Shows only when goal done -->
+  <div id="goalCompleteBox">
+    <h2>🎉 Goal Completed!</h2>
+    <p id="completeMsg"></p>
+    <input type="text" id="newGoalName" placeholder="Enter New Goal (e.g., Laptop)" style="width:90%; padding:8px; margin:5px;">
+    <input type="number" id="newGoalAmount" placeholder="New Goal Amount (₹)" style="width:90%; padding:8px; margin:5px;">
+    <button class="btn btn-blue" onclick="restartGoal()">🚀 Start New Goal</button>
+  </div>
 </div>
 
 <div class="card">
-<h3>Quick Actions</h3>
-<button class="btn-blue" onclick="location.href='add.html'">➕ Add New Expense</button>
-<button class="btn-green" onclick="location.href='analytics.html'">📈 View Analysis & Saving Tips</button>
+  <h4>Quick Actions</h4>
+  <a href="add.html"><button class="btn btn-blue">➕ Add New Expense</button></a>
+  <a href="analytics.html"><button class="btn btn-green">📊 View Analysis & Saving Tips</button></a>
 </div>
 
 <div class="card">
-<h3>🎯 My Goal: <span id="goal">Not Set</span></h3>
-<div class="progress"><div id="goalBar" class="fill" style="width:0%;background:#4a6cf7"></div></div>
-<p id="goalText"></p>
-</div>
+  <p id="goalText">🎯 My Goal: Not set yet</p>
+  <p id="autoClearInfo" style="font-size:12px; color:gray;"></p>
 </div>
 
 <script>
-// Load from LocalStorage (Dynamic Cloud fallback)
-let exp = JSON.parse(localStorage.getItem('exp_v2')||'[]');
-let budget = Number(localStorage.getItem('budget_v2')||0);
-let goalName = localStorage.getItem('goalName_v2')||'';
-let goalAmt = Number(localStorage.getItem('goalAmt_v2')||0);
-// PASTE THE AUTO CLEAR CODE HERE - At the very top
+// ========== 1. AUTO CLEAR EVERY MONTH START ==========
+(function autoClearMonthly(){
+  const now = new Date();
+  const currentMonthKey = `${now.getMonth()}-${now.getFullYear()}`;
+  const lastCleared = localStorage.getItem('lastClearedMonth');
 
-// Your old code starts here...
+  if(lastCleared !== currentMonthKey){
+    // New month - clear only expenses, keep budget & goal
+    localStorage.removeItem('expenses');
+    localStorage.setItem('lastClearedMonth', currentMonthKey);
+    localStorage.setItem('lastAutoClearDate', now.toLocaleDateString());
+    console.log("Auto cleared for new month");
+  }
+  const lastDate = localStorage.getItem('lastAutoClearDate');
+  if(lastDate) document.getElementById('autoClearInfo').innerText = `Auto-cleared on: ${lastDate} (Every 1st of month)`;
+})();
+// ========== AUTO CLEAR END ==========
+
+// ========== 2. LOAD DATA ==========
+let budget = parseInt(localStorage.getItem('budget') || 0);
 let expenses = JSON.parse(localStorage.getItem('expenses') || '[]');
-...
+let goalName = localStorage.getItem('goalName') || 'house';
+let goalAmount = parseInt(localStorage.getItem('goalAmount') || 1000);
 
-let total = exp.reduce((s,e)=>s+e.amt,0);
-document.getElementById('budget').innerText=budget;
-document.getElementById('spent').innerText=total;
-document.getElementById('saved').innerText= budget-total>0?budget-total:0;
-document.getElementById('bar').style.width= budget?Math.min((total/budget)*100,100)+'%':'0%';
-document.getElementById('tip').innerText= total>budget? '🚨 Over budget! Stop spending!' : '✅ You are on track to save money!';
+let totalSpent = expenses.reduce((sum, e) => sum + parseInt(e.amount || 0), 0);
+let saved = budget - totalSpent;
+if(saved < 0) saved = 0;
 
-document.getElementById('goal').innerText= goalName? goalName+' (₹'+goalAmt+')' : 'Set goal in Add Page';
-let saved = budget-total>0?budget-total:0;
-let gPerc = goalAmt? Math.min((saved/goalAmt)*100,100):0;
-document.getElementById('goalBar').style.width=gPerc+'%';
-document.getElementById('goalText').innerText= gPerc>=100? '🎉 Goal Achieved!':'Need ₹'+(goalAmt-saved)+' more to reach goal';
+// Update UI
+document.getElementById('budgetText').innerText = `Budget: ₹${budget} | Spent: ₹${totalSpent}`;
+document.getElementById('savedText').innerText = `💵 Saved: ₹${saved}`;
+document.getElementById('goalText').innerText = `🎯 My Goal: ${goalName} (₹${goalAmount})`;
 
+let percent = budget > 0 ? Math.min((totalSpent / budget) * 100, 100) : 0;
+document.getElementById('progress').style.width = percent + "%";
+
+if(totalSpent > budget && budget > 0){
+  document.getElementById('msg').innerText = "🚨 Over budget! Stop spending!";
+  document.getElementById('msg').style.background = "#fecaca";
+} else {
+  document.getElementById('msg').innerText = "✅ You are on track!";
+}
+
+// ========== 3. GOAL COMPLETION CHECK ==========
+if(goalAmount > 0 && saved >= goalAmount){
+  document.getElementById('goalCompleteBox').style.display = "block";
+  document.getElementById('completeMsg').innerText = `You saved ₹${saved} and completed your goal "${goalName}" of ₹${goalAmount}!`;
+  document.getElementById('progress').style.background = "gold";
+}
+
+function restartGoal(){
+  const newName = document.getElementById('newGoalName').value;
+  const newAmount = document.getElementById('newGoalAmount').value;
+  if(!newName || !newAmount){
+    alert("Please enter new goal name and amount");
+    return;
+  }
+  // Save new goal and reset savings cycle
+  localStorage.setItem('goalName', newName);
+  localStorage.setItem('goalAmount', newAmount);
+  localStorage.removeItem('expenses'); // Start fresh for new goal
+  localStorage.setItem('budget', 0); // Optional: ask user to set new budget
+  alert(`🎉 New Goal "${newName}" started! Set your new budget now.`);
+  location.href = "index.html";
+}
+
+// Register Service Worker
 if('serviceWorker' in navigator){ navigator.serviceWorker.register('sw.js'); }
 </script>
 </body>
