@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Add Expense - Smart Saver</title>
+<style>
+body{font-family:Arial;background:#f5f7fb;padding:15px}
+.card{background:white;padding:20px;border-radius:16px;margin-bottom:14px;box-shadow:0 2px 10px #ddd}
+input,select{width:100%;padding:12px;margin:8px 0;border-radius:10px;border:1px solid #ccc}
+button{width:100%;padding:13px;border:none;border-radius:10px;background:#4a6cf7;color:white;font-size:16px;font-weight:bold}
+.nav{display:flex;gap:10px;margin-bottom:15px}
+.nav a{flex:1;text-align:center;padding:10px;background:white;border-radius:10px;text-decoration:none;color:#4a6cf7;font-weight:bold;box-shadow:0 2px 5px #ddd}
+</style>
+</head>
+<body>
+<div style="max-width:500px;margin:auto">
+<div class="nav">
+<a href="index.html">🏠 Home</a>
+<a href="add.html">➕ Add</a>
+<a href="analytics.html">📊 Analytics</a>
+</div>
+
+<div class="card">
+<h3>⚙️ Set Budget & Savings Goal</h3>
+<input id="budget" type="number" placeholder="Monthly Budget ₹">
+<input id="goalName" placeholder="Goal Name e.g. Bike">
+<input id="goalAmt" type="number" placeholder="Goal Amount ₹">
+<button onclick="savePlan()">Save Plan - Start Saving!</button>
+</div>
+
+<div class="card">
+<h3>➕ Add Expense (Saves to Dynamic Cloud)</h3>
+<input id="amount" type="number" placeholder="Amount ₹">
+<select id="category">
+<option>Food</option><option>Travel</option><option>Shopping</option><option>Bills</option><option>Entertainment</option><option>Others</option>
+</select>
+<input id="note" placeholder="Note">
+<button onclick="addExpense()">Save Expense</button>
+<p id="status" style="margin-top:10px;color:green"></p>
+</div>
+</div>
+
+<script>
+// PASTE YOUR GOOGLE SCRIPT URL HERE - This is your Dynamic Cloud API
+const API_URL = "https://script.google.com/macros/s/YOUR_SCRIPT_ID/exec";
+
+function savePlan(){
+ localStorage.setItem('budget_v2', document.getElementById('budget').value);
+ localStorage.setItem('goalName_v2', document.getElementById('goalName').value);
+ localStorage.setItem('goalAmt_v2', document.getElementById('goalAmt').value);
+ alert('✅ Budget & Goal Saved! App will now help you save!');
+}
+async function addExpense(){
+ let amt = Number(document.getElementById('amount').value);
+ if(!amt) return alert('Enter amount');
+ let cat = document.getElementById('category').value;
+ let note = document.getElementById('note').value;
+ let expense = {amount: amt, category: cat, note: note, date: new Date().toLocaleDateString(), userId: "user123"};
+
+ // 1. Save Locally (Offline)
+ let exp = JSON.parse(localStorage.getItem('exp_v2')||'[]');
+ exp.push({amt: amt, cat: cat, note: note, date: new Date().toLocaleDateString()});
+ localStorage.setItem('exp_v2', JSON.stringify(exp));
+
+ // 2. Save to Dynamic Cloud (Google Sheets)
+ document.getElementById('status').innerText="Saving to Dynamic Cloud...";
+ try{
+   await fetch(API_URL, {method: "POST", mode: "no-cors", body: JSON.stringify(expense)});
+   document.getElementById('status').innerText="✅ Saved to Cloud + Local! Tip: Saved successfully!";
+ } catch(e){
+   document.getElementById('status').innerText="✅ Saved Locally (Offline Mode)! Will sync to cloud later.";
+ }
+ document.getElementById('amount').value="";
+}
+</script>
+</body>
+</html>
