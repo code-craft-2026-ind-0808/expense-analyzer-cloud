@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Smart Saver - Home</title>
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#4a6cf7">
+<style>
+body{font-family:Arial;background:linear-gradient(135deg,#667eea,#764ba2);padding:15px;margin:0}
+.card{background:white;padding:20px;border-radius:16px;margin-bottom:14px;box-shadow:0 5px 15px rgba(0,0,0,0.2)}
+button{width:100%;padding:14px;border:none;border-radius:10px;font-size:16px;margin:6px 0;font-weight:bold;cursor:pointer}
+.btn-blue{background:#4a6cf7;color:white}
+.btn-green{background:#10b981;color:white}
+.btn-orange{background:#f59e0b;color:white}
+.nav{display:flex;gap:10px}
+.nav a{flex:1;text-align:center;padding:12px;background:white;border-radius:10px;text-decoration:none;color:#4a6cf7;font-weight:bold}
+.progress{width:100%;height:18px;background:#eee;border-radius:10px;overflow:hidden}
+.fill{height:100%;background:#10b981;transition:0.5s}
+</style>
+</head>
+<body>
+<div style="max-width:500px;margin:auto">
+<h1 style="color:white;text-align:center">💰 Smart Saver Cloud</h1>
+<div class="nav">
+<a href="index.html">🏠 Home</a>
+<a href="add.html">➕ Add</a>
+<a href="analytics.html">📊 Analytics</a>
+</div>
+
+<div class="card">
+<h2>Hi, Saver! 👋</h2>
+<p>Budget: ₹<span id="budget">0</span> | Spent: ₹<span id="spent">0</span></p>
+<div class="progress"><div id="bar" class="fill" style="width:0%"></div></div>
+<p>💵 <b>Saved: ₹<span id="saved">0</span></b></p>
+<p id="tip" style="background:#dcfce7;padding:10px;border-radius:8px;margin-top:10px"></p>
+</div>
+
+<div class="card">
+<h3>Quick Actions</h3>
+<button class="btn-blue" onclick="location.href='add.html'">➕ Add New Expense</button>
+<button class="btn-green" onclick="location.href='analytics.html'">📈 View Analysis & Saving Tips</button>
+</div>
+
+<div class="card">
+<h3>🎯 My Goal: <span id="goal">Not Set</span></h3>
+<div class="progress"><div id="goalBar" class="fill" style="width:0%;background:#4a6cf7"></div></div>
+<p id="goalText"></p>
+</div>
+</div>
+
+<script>
+// Load from LocalStorage (Dynamic Cloud fallback)
+let exp = JSON.parse(localStorage.getItem('exp_v2')||'[]');
+let budget = Number(localStorage.getItem('budget_v2')||0);
+let goalName = localStorage.getItem('goalName_v2')||'';
+let goalAmt = Number(localStorage.getItem('goalAmt_v2')||0);
+
+let total = exp.reduce((s,e)=>s+e.amt,0);
+document.getElementById('budget').innerText=budget;
+document.getElementById('spent').innerText=total;
+document.getElementById('saved').innerText= budget-total>0?budget-total:0;
+document.getElementById('bar').style.width= budget?Math.min((total/budget)*100,100)+'%':'0%';
+document.getElementById('tip').innerText= total>budget? '🚨 Over budget! Stop spending!' : '✅ You are on track to save money!';
+
+document.getElementById('goal').innerText= goalName? goalName+' (₹'+goalAmt+')' : 'Set goal in Add Page';
+let saved = budget-total>0?budget-total:0;
+let gPerc = goalAmt? Math.min((saved/goalAmt)*100,100):0;
+document.getElementById('goalBar').style.width=gPerc+'%';
+document.getElementById('goalText').innerText= gPerc>=100? '🎉 Goal Achieved!':'Need ₹'+(goalAmt-saved)+' more to reach goal';
+
+if('serviceWorker' in navigator){ navigator.serviceWorker.register('sw.js'); }
+</script>
+</body>
+</html>
